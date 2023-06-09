@@ -1,0 +1,45 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: MSBuild
+
+on:
+  push:
+    branches: [ "4.x" ]
+  pull_request:
+    branches: [ "4.x" ]
+
+env:
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Configure cmake
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake -G "Visual Studio 17 2022" -A x64 -DBUILD_SHARED_LIBS=OFF -DBUILD_opencv_world=ON -S . -B "build"
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake --build build --config Release
+      
+    - name: Upload
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: build
+        path: build
